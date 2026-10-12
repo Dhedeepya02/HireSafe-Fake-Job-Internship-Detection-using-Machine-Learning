@@ -24,6 +24,20 @@ st.write(
     "legitimate or potentially fraudulent using TF-IDF features and a linear SVM."
 )
 
+with st.expander("⚙️ Detection sensitivity", expanded=False):
+    threshold = st.slider(
+        "Decision threshold",
+        min_value=-1.0,
+        max_value=1.0,
+        value=-0.3,
+        step=0.05,
+        help=(
+            "Lower = catches more fake jobs (fewer missed frauds, more false alarms). "
+            "Higher = only flags obvious fakes (fewer false alarms, more missed frauds). "
+            "Default -0.3 is recommended for fraud detection."
+        ),
+    )
+
 with st.form("job_form"):
     title = st.text_input("Job title")
     company_profile = st.text_area("Company information")
@@ -41,6 +55,7 @@ if submitted:
                 description=description,
                 requirements=requirements,
                 benefits=benefits,
+                threshold=threshold,
             )
         if result["prediction"] == 1:
             st.error(result["ui_label"])
@@ -62,5 +77,16 @@ if submitted:
         st.error(str(exc))
     except ValueError as exc:
         st.warning(str(exc))
+        st.info(
+            "💡 **Tip**: For accurate fraud detection, provide detailed information including:\n"
+            "- Full job title (e.g., Senior Software Engineer)\n"
+            "- Company background/profile\n"
+            "- Detailed job description with responsibilities\n"
+            "- Specific requirements and skills needed\n"
+            "- Benefits and compensation details\n\n"
+            "The model analyzes word patterns and context to identify suspicious job postings. "
+            "Use real job-related terms like: job, work, position, company, experience, skills, "
+            "responsibilities, salary, benefits, etc."
+        )
     except Exception as exc:
         st.error(f"Could not generate a prediction: {exc}")

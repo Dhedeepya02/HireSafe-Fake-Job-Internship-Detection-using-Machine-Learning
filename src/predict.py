@@ -65,6 +65,45 @@ def predict_posting(
     )
     if not cleaned_text:
         raise ValueError("Please provide at least one non-empty posting field.")
+    
+    # Warn if text is too short for reliable prediction
+    word_count = len(cleaned_text.split())
+    if word_count < 10:
+        raise ValueError(
+            f"Input text is too short ({word_count} words). "
+            "Please provide more detailed job information (title, company, description, requirements, benefits) "
+            "for accurate classification. The model needs sufficient context to identify patterns."
+        )
+    
+    # Check if input contains meaningful words (not just random characters)
+    # After NLTK cleaning, valid words should be alphabetic and not just single letters
+    meaningful_words = [w for w in cleaned_text.split() if len(w) > 2]
+    if len(meaningful_words) < 8:
+        raise ValueError(
+            f"Input does not contain enough meaningful words ({len(meaningful_words)} meaningful words found). "
+            "Please provide actual job posting content with real words describing the position, company, "
+            "requirements, and benefits. Random characters or gibberish cannot be classified."
+        )
+    
+    # Check for common job-related vocabulary to ensure content is relevant
+    job_related_keywords = {
+        'job', 'work', 'position', 'role', 'company', 'team', 'skill', 'experience',
+        'required', 'responsibility', 'salary', 'benefit', 'remote', 'full', 'part',
+        'engineer', 'developer', 'manager', 'analyst', 'specialist', 'coordinator',
+        'software', 'data', 'marketing', 'sales', 'support', 'service', 'product',
+        'year', 'degree', 'education', 'python', 'java', 'javascript', 'sql', 'cloud',
+        'manage', 'develop', 'design', 'create', 'build', 'lead', 'support'
+    }
+    
+    words_lower = set(word.lower() for word in cleaned_text.split())
+    job_keywords_found = len(words_lower.intersection(job_related_keywords))
+    
+    if job_keywords_found < 3:
+        raise ValueError(
+            f"Input does not appear to be a job posting (found only {job_keywords_found} job-related keywords). "
+            "Please provide actual job posting content with terms like: job, work, position, company, "
+            "experience, skills, responsibilities, salary, benefits, etc."
+        )
 
     vectorizer, model = load_saved_artifacts()
     features = vectorizer.transform([cleaned_text])
